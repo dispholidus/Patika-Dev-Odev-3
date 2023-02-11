@@ -1,4 +1,5 @@
-﻿using BookStoreApi.Common;
+﻿using AutoMapper;
+using BookStoreApi.Common;
 using BookStoreApi.DbOperations;
 using BookStoreApi.Models.Entities;
 
@@ -8,24 +9,19 @@ namespace BookStoreApi.Models.Repositories
     public class BookRepository : IBookRepository
     {
         private readonly BookStoreDbContext _bookStoreDbContext;
+
         public BookRepository(BookStoreDbContext bookStoreDbContext)
         {
             _bookStoreDbContext = bookStoreDbContext;
         }
-        public bool AddBook(CreateBookModel createBookModel)
+        public bool AddBook(CreateBookModel createBookModel, IMapper mapper)
         {
             Book? book = _bookStoreDbContext.Books.FirstOrDefault(b => b.BookTitle == createBookModel.BookTitle);
             if (book != null)
             {
                 return false;
             }
-            Book newBook = new()
-            {
-                BookTitle = createBookModel.BookTitle,
-                BookPublishDate = createBookModel.BookPublishDate,
-                BookPageCount = createBookModel.BookPageCount,
-                GenreId = createBookModel.GenreId
-            };
+            Book newBook = mapper.Map<Book>(createBookModel);
 
             _bookStoreDbContext.Books.Add(newBook);
             _bookStoreDbContext.SaveChanges();
@@ -44,37 +40,26 @@ namespace BookStoreApi.Models.Repositories
             return false;
         }
 
-        public BookModel? GetBookById(int bookId)
+        public BookModel? GetBookById(int bookId, IMapper mapper)
         {
             Book? book = _bookStoreDbContext.Books.FirstOrDefault(b => b.BookId == bookId);
             if (book != null)
             {
-                BookModel bookModel = new()
-                {
-                    BookTitle = book.BookTitle,
-                    Genre = ((GenreEnum)book.GenreId).ToString(),
-                    BookPageCount = book.BookPageCount,
-                    BookPublishDate = book.BookPublishDate.Date.ToString("dd/MM/yyy")
-                };
+                BookModel bookModel = mapper.Map<BookModel>(book);
                 return bookModel;
             }
             return null;
 
         }
 
-        public IEnumerable<BooksModel> GetBooks()
+        public IEnumerable<BooksModel> GetBooks(IMapper mapper)
         {
             IEnumerable<Book> books = _bookStoreDbContext.Books.OrderBy(b => b.GenreId).ToList();
             List<BooksModel> booksViewModel = new();
             foreach (var book in books)
             {
-                booksViewModel.Add(new BooksModel
-                {
-                    BookTitle = book.BookTitle,
-                    Genre = ((GenreEnum)book.GenreId).ToString(),
-                    BookPageCount = book.BookPageCount,
-                    BookPublishDate = book.BookPublishDate.Date.ToString("dd/MM/yyy")
-                });
+
+                booksViewModel.Add(mapper.Map<BooksModel>(book));
             }
             return booksViewModel;
         }

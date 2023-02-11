@@ -1,3 +1,4 @@
+using AutoMapper;
 using BookStoreApi.DbOperations;
 using BookStoreApi.Models.Entities;
 using BookStoreApi.Models.Repositories;
@@ -10,22 +11,24 @@ namespace BookStoreApi.Controllers
     public class BookController : ControllerBase
     {
         private readonly IBookRepository _bookRepository;
-        public BookController(IBookRepository bookRepository)
+        private readonly IMapper _mapper;
+        public BookController(IBookRepository bookRepository, IMapper mapper)
         {
             _bookRepository = bookRepository;
+            _mapper = mapper;
         }
 
         [HttpGet]
         public IActionResult GetBooks()
         {
-            IEnumerable<BooksModel> books = _bookRepository.GetBooks();
+            IEnumerable<BooksModel> books = _bookRepository.GetBooks(_mapper);
             return Ok(books);
         }
 
         [HttpGet("{bookId}")]
         public IActionResult GetBookById(int bookId)
         {
-            BookModel? book = _bookRepository.GetBookById(bookId);
+            BookModel? book = _bookRepository.GetBookById(bookId, _mapper);
             if (book != null)
             {
                 return Ok(book);
@@ -36,7 +39,7 @@ namespace BookStoreApi.Controllers
         [HttpPost]
         public IActionResult AddBook([FromBody] CreateBookModel book)
         {
-            if (_bookRepository.AddBook(book))
+            if (_bookRepository.AddBook(book, _mapper))
             {
                 return Ok(book);
             }
